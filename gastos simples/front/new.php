@@ -55,7 +55,7 @@ $flashes = flash_consume_all();
             </ul>
         </div>
     <?php endif; ?>
-    ../back/controllers/expenses_insert.php
+    <form action="../back/controllers/expenses_insert.php" method="POST">
     <?= csrf_field() ?>
     <div class="field">
         <label for="date">Fecha</label>
@@ -75,7 +75,7 @@ $flashes = flash_consume_all();
 
     <div class="field actions">
         <button class="btn primary" type="submit">Guardar</button>
-        index.phpCancelar</a>
+        <a href="index.php">Cancelar</a>
     </div>
     </form>
 </main>
