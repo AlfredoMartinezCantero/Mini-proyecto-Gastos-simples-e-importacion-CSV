@@ -1,5 +1,5 @@
 <?php
-declare(stric_types=1);
+declare(strict_types=1);
 
 require_once __DIR__ . '/conexion_bd.php';
 
@@ -12,7 +12,7 @@ function auth_register(string $email, string $password, string $role = 'user'): 
         throw new InvalidArgumentException('Rol no válido');
     }
     if (mb_strlen($password) < 8){
-        throw new InvaidArgumentException('La contraseña debe tener al menos 8 carácteres');
+        throw new InvalidArgumentException('La contraseña debe tener al menos 8 carácteres');
     }
 
     $pdo = get_pdo();
@@ -33,7 +33,7 @@ function auth_login(string $email, string $password): bool{
     $email = trim(mb_strtolower($email));
     $pdo = get_pdo();
 
-    $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE email = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, password_hash, role FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
     $row = $stmt->fetch();
     if (!$row) return false;
@@ -66,7 +66,7 @@ function current_user_id(): ?int {
 }
 
 function current_user_role(): string {
-    return $_SESSION['user_role'] ?? 'guest';
+    return $_SESSION['user_role'] ?? null;
 }
 
 function current_user_is_admin(): bool {
@@ -75,9 +75,10 @@ function current_user_is_admin(): bool {
 
 function require_login(): void {
     if (!current_user_id()){
-        http_response_code(302);
         header('Location: /front/login.php');
-        exit;
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
+        $host = $_SERVER['HTTP_HOST'];
+        header("Location: {$protocol}://{$host}/front/login.php");
     }
 }
 

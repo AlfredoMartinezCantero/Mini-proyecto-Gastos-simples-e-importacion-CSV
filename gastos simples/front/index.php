@@ -2,13 +2,108 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../back/inc/conexion_bd.php';
+require_once __DIR__ . '/../back/inc/auth.php';
 require_once __DIR__ . '/../back/inc/csrf.php';
 
-// Valores iniciales
 
-$month = $_GET['month'] ?? '';
-$caregory = $_GET['category'] ?? '';
-$q = $_GET['q'] ?? '';
+// =====================================================
+// Bootstrap temporal (solo desarrollo) -> eliminar con login.php
+if (empty($_SESSION['user_id'])) {
+    $pdo = get_pdo();
+    $row = $pdo->query("SELECT id, email FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1")->fetch();
+    if ($row) {
+        $_SESSION['user_id']    = (int)$row['id'];
+        $_SESSION['user_email'] = $row['email'];
+        $_SESSION['user_role']  = 'admin';
+    }
+}
+// =====================================================
+
+$pdo = get_pdo();
+$userId   = current_user_id();
+$isAdmin  = current_user_is_admin();
+
+// Lectura de filtros
+$month    = trim((string)($_GET['month'] ?? ''));
+$category = trim((string)($_GET['category'] ?? ''));
+$q        = trim((string)($_GET['q'] ?? ''));
+$page     = max(1, (int)($_GET['p'] ?? 1));
+$perPage  = 25;
+
+// Construcción dinámica del WHERE
+$w    = [];
+$args = [];
+
+// Multiusuario
+if (!$isAdmin) {
+    $w[] = 'user_id = :uid';
+    $args[':uid'] = $userId ?? 0; // si no hay sesión, en práctica no traerá nada
+}
+
+// Mes (YYYY-MM) -> rango de fechas
+$from = $to = null;
+if ($month !== '' && preg_match('/^\d{4}-\d{2}$/', $month)) {
+    try {
+        $dt = DateTime::createFromFormat('Y-m-d', $month . '-01');
+        $dt->setTime(0, 0, 0);
+        $from = $dt->format('Y-m-d');
+        $to   = $dt->modify('last day of this month')->format('Y-m-d');
+        $w[] = '`date` BETWEEN :from AND :to';
+        $args[':from'] = $from;
+        $args[':to']   = $to;
+    } catch (Throwable $e) {
+        // filtro inválido -> ignoramos
+    }
+}
+
+// Categoría (igualdad)
+if ($category !== '') {
+    $w[] = 'category = :category';
+    $args[':category'] = $category;
+}
+
+// Búsqueda por texto en concepto (LIKE)
+if ($q !== '') {
+    $w[] = 'concept LIKE :q';
+    $args[':q'] = '%' . $q . '%';
+}
+
+$where = $w ? ('WHERE ' . implode(' AND ', $w)) : '';
+
+// Conteo total para paginación
+$sqlCount = "SELECT COUNT(*) AS c FROM expenses {$where}";
+$stmt = $pdo->prepare($sqlCount);
+$stmt->execute($args);
+$totalRows = (int)$stmt->fetchColumn();
+$totalPages = max(1, (int)ceil($totalRows / $perPage));
+$page = min($page, $totalPages);
+$offset = ($page - 1) * $perPage;
+
+// Query de datos
+$sql = "SELECT id, `date`, concept, category, amount
+        FROM expenses
+        {$where}
+        ORDER BY `date` DESC, id DESC
+        LIMIT :limit OFFSET :offset";
+$stmt = $pdo->prepare($sql);
+foreach ($args as $k => $v) { $stmt->bindValue($k, $v); }
+$stmt->bindValue(':limit',  $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset,  PDO::PARAM_INT);
+$stmt->execute();
+$rows = $stmt->fetchAll();
+
+// Balance (totales)
+$sqlBal = "SELECT
+              COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END),0) AS total_gastos,
+              COALESCE(SUM(CASE WHEN amount < 0 THEN amount ELSE 0 END),0) AS total_ingresos
+           FROM expenses {$where}";
+$stmt = $pdo->prepare($sqlBal);
+$stmt->execute($args);
+$bal = $stmt->fetch() ?: ['total_gastos' => 0, 'total_ingresos' => 0];
+
+// Helper de formato
+function eur(float $n): string { return '€ ' . number_format($n, 2, ',', '.'); }
+
 ?>
 
 <!doctype html>
@@ -26,11 +121,11 @@ $q = $_GET['q'] ?? '';
         <nav aria-label="Acciones principales">
             <a class="btn" href="import.php" aria-label="Importar CSV">Importar CSV</a>
 
-            <!-- Exportar: usar los filtros activos (GET); no modifica estado, no requiere CSRF -->$_COOKIE
+            <!-- Exportar: usar los filtros activos (GET); no modifica estado, no requiere CSRF -->
             <form class="inline-form" action="../back/controllers/export_csv.php" method="get" aria-label="Exportar CSV">
-                <input type="hiidden" name="month" value="<?=htmlspecialchars($month) ?>">
-                <input type="hiidden" name="category" value="<?=htmlspecialchars($caregory) ?>">
-                <input type="hiidden" name="q" value="<?=htmlspecialchars($q) ?>">
+                <input type="hidden" name="month" value="<?=htmlspecialchars($month) ?>">
+                <input type="hidden" name="category" value="<?=htmlspecialchars($category) ?>">
+                <input type="hidden" name="q" value="<?=htmlspecialchars($q) ?>">
                 <button class="btn" type="submit">Exportar CSV</button>
         </form>
     </nav>
@@ -95,7 +190,7 @@ $q = $_GET['q'] ?? '';
 
                     <div class="table-wrapper">
                         <table class="table" aria-describedby="tabla-ayuda">
-                            <thread>
+                            <thead>
                                 <tr>
                                     <th scope="col">Fecha</th>
                                     <th scope="col">Concepto</th>
@@ -103,7 +198,7 @@ $q = $_GET['q'] ?? '';
                                     <th scope="col" class="num">Importe (€)</th>
                                     <th scope="col" class="actions-col">Acciones</th>
                                 </tr>
-                            </thread>
+                            </thead>
                             <tbody>
                                 <tr>
                                     <td colspan="5" class="muted">Sin datos todavía. Aparecerán aquí al implementar la consulta (paso 2).</td>

@@ -5,7 +5,7 @@ session_start();
 
 /**
  * Configuración: ajustar aqui las credenciales o via variables de entorno.
- * - Variables de entorno admitidas: DB_HOST, DB_NAME, DB_USEr, DB_PASS, DB_CHARSET
+ * - Variables de entorno admitidas: DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET
  */
 
 const APP_DEBUG = true; // en producción: false
@@ -27,7 +27,7 @@ function get_pdo(): PDO{
     $pass = env('DB_PASS', '');     // Cambiar el entorno
     $charset = env('DB_CHARSET', 'utf8mb4');
 
-    $dsn = "mysql:host={$host};dbname={$db};charset={$charset}";
+    $dsn = "mysql:host={$host};dbname={$name};charset={$charset}";
     
     try{
         $pdo = new PDO($dsn, $user, $pass, [
