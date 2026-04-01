@@ -43,3 +43,23 @@ CURRENT_TIMESTAMP,
 -- amount > 0 se interpreta como gasto; amount < 0 como ingreso.
 -- Índices para busquedas por mes y categoría
 
+-- Usuarios creados debido a errores
+
+-- Para conexiones TCP (host = 127.0.0.1)
+CREATE USER IF NOT EXISTS 'gastos_user'@'127.0.0.1'
+  IDENTIFIED BY 'TuClaveSuperSegura_2026';
+
+-- Para conexiones por socket (host = localhost)
+CREATE USER IF NOT EXISTS 'gastos_user'@'localhost'
+  IDENTIFIED BY 'TuClaveSuperSegura_2026';
+
+
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON gastos_simples.* TO 'gastos_user'@'127.0.0.1';
+
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON gastos_simples.* TO 'gastos_user'@'localhost';
+
+FLUSH PRIVILEGES;
+

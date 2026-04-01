@@ -1,4 +1,5 @@
 <?php
+// back/inc/auth.php
 declare(strict_types=1);
 
 require_once __DIR__ . '/conexion_bd.php';
@@ -12,7 +13,7 @@ function auth_register(string $email, string $password, string $role = 'user'): 
         throw new InvalidArgumentException('Rol no válido');
     }
     if (mb_strlen($password) < 8){
-        throw new InvalidArgumentException('La contraseña debe tener al menos 8 carácteres');
+        throw new InvalidArgumentException('La contraseña debe tener al menos 8 caracteres');
     }
 
     $pdo = get_pdo();
@@ -21,17 +22,17 @@ function auth_register(string $email, string $password, string $role = 'user'): 
     $stmt->execute([$email]);
     if ($stmt->fetchColumn()){
         throw new RuntimeException('El email ya está en uso');
-}
+    }
 
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $ins = $pdo->prepare('INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)');
+    $ins  = $pdo->prepare('INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)');
     $ins->execute([$email, $hash, $role]);
     return (int)$pdo->lastInsertId();
 }
 
 function auth_login(string $email, string $password): bool{
     $email = trim(mb_strtolower($email));
-    $pdo = get_pdo();
+    $pdo   = get_pdo();
 
     $stmt = $pdo->prepare('SELECT id, password_hash, role FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
@@ -42,13 +43,13 @@ function auth_login(string $email, string $password): bool{
 
     if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)){
         $new = password_hash($password, PASSWORD_DEFAULT);
-        $upd = $pdo->prepare('UPDATE users SET password_hash = ? WHERE email = ?');
+        $upd = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?'); // <- corregido
         $upd->execute([$new, (int)$row['id']]);
     }
 
-    $_SESSION['user_id'] = (int)$row['id'];
+    $_SESSION['user_id']    = (int)$row['id'];
     $_SESSION['user_email'] = $email;
-    $_SESSION['user_role'] = $row['role'];
+    $_SESSION['user_role']  = $row['role'];
     return true;
 }
 
@@ -62,11 +63,12 @@ function auth_logout(): void{
 }
 
 function current_user_id(): ?int {
-    return isset ($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
+    return isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
 }
 
 function current_user_role(): string {
-    return $_SESSION['user_role'] ?? null;
+    $role = $_SESSION['user_role'] ?? '';
+    return is_string($role) && $role !== '' ? $role : 'guest';
 }
 
 function current_user_is_admin(): bool {
@@ -75,10 +77,8 @@ function current_user_is_admin(): bool {
 
 function require_login(): void {
     if (!current_user_id()){
-        header('Location: /front/login.php');
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-        $host = $_SERVER['HTTP_HOST'];
-        header("Location: {$protocol}://{$host}/front/login.php");
+        header('Location: /front/login.php', true, 302);
+        exit;
     }
 }
 
