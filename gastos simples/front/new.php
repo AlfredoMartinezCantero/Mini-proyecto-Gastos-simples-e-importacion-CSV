@@ -12,7 +12,7 @@ require_login(); // Necesita sesión
 // Recuperar valores previos
 $old = $_SESSION['form_old'] ??[];
 $errors = $_SESSION['form_errors'] ??[];
-$unset($_SESSION['form_old'], $_SESSION['form_errors']);
+unset($_SESSION['form_old'], $_SESSION['form_errors']);
 
 // Defaults
 $today = (new DateTime())->format('Y-m-d');
@@ -28,7 +28,7 @@ $flashes = flash_consume_all();
 <head>
     <meta charset="utf-8">
     <title>Añadir gasto - Gastos simples</title>
-    <meta name="viewport" content="width-device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
@@ -55,7 +55,7 @@ $flashes = flash_consume_all();
             </ul>
         </div>
     <?php endif; ?>
-    <link rel="stylesheet" href="../back/controllers/expenses_insert.php" method="post" class="card" novalidate>
+    ../back/controllers/expenses_insert.php
     <?= csrf_field() ?>
     <div class="field">
         <label for="date">Fecha</label>
@@ -70,12 +70,12 @@ $flashes = flash_consume_all();
     <div class="field">
         <label for="amount">Importe (€) - usa punto decimal (ej.: 12.50)</label>
         <input type="number" id="amount" name="amount" required step="0.01" inputmode="decimal" value="<?= htmlspecialchars($amount) ?>">
-        <small class="help">Gasto & gt; 0, ingreso & lt; 0 (opcional).</small>
+        <small class="help">Gasto &gt; 0, ingreso &lt; 0 (opcional).</small>
     </div>
 
     <div class="field actions">
         <button class="btn primary" type="submit">Guardar</button>
-        <link rel="stylesheet" href="index.php">Cancelar</a>
+        index.phpCancelar</a>
     </div>
     </form>
 </main>
