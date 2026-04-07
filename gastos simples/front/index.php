@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../back/inc/conexion_bd.php';
 require_once __DIR__ . '/../back/inc/auth.php';
 require_once __DIR__ . '/../back/inc/csrf.php';
+require_once __DIR__ . '/../back/inc/flash.php';
 
 
 // =====================================================
@@ -119,6 +120,7 @@ function eur(float $n): string { return '€ ' . number_format($n, 2, ',', '.');
     <header class="app-header">
         <h1>Gastos Simples</h1>
         <nav aria-label="Acciones principales">
+            <a class="btn" href="new.php" aria-label="Añadir gasto">Añadir gasto</a>
             <a class="btn" href="import.php" aria-label="Importar CSV">Importar CSV</a>
 
             <!-- Exportar: usar los filtros activos (GET); no modifica estado, no requiere CSRF -->
@@ -130,6 +132,20 @@ function eur(float $n): string { return '€ ' . number_format($n, 2, ',', '.');
         </form>
     </nav>
 </header>
+
+<?php
+$flashes = flash_consume_all();
+if ($flashes):
+?>
+  <div class="container" aria-live="polite" aria-atomic="true">
+    <?php foreach ($flashes as $f): ?>
+      <div class="card" role="status">
+        <strong><?= htmlspecialchars(ucfirst($f['type'])) ?>:</strong>
+        <?= htmlspecialchars($f['message']) ?>
+      </div>
+    <?php endforeach; ?>
+  </div>
+<?php endif; ?>
 
             <main class="container">
                 <!-- Filtros -->
@@ -200,9 +216,29 @@ function eur(float $n): string { return '€ ' . number_format($n, 2, ',', '.');
                                 </tr>
                             </thead>
                             <tbody>
+                            <?php if (empty($rows)): ?>
                                 <tr>
-                                    <td colspan="5" class="muted">Sin datos todavía. Aparecerán aquí al implementar la consulta (paso 2).</td>
+                                <td colspan="5" class="muted">No hay resultados para los filtros actuales.</td>
                                 </tr>
+                            <?php else: ?>
+                                <?php foreach ($rows as $r): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($r['date']) ?></td>
+                                    <td><?= htmlspecialchars($r['concept']) ?></td>
+                                    <td><?= htmlspecialchars($r['category']) ?></td>
+                                    <td class="num"><?= '€ ' . number_format((float)$r['amount'], 2, ',', '.') ?></td>
+                                    <td>
+                                    <a class="btn" href="edit.php?id=<?= (int)$r['id'] ?>" aria-label="Editar gasto">Editar</a>
+
+                                    <form class="inline-form" action="../back/controllers/expenses_delete.php" method="post" aria-label="Borrar gasto">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                                        <button class="btn danger" type="submit">Borrar</button>
+                                    </form>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                             </tbody>
                         </table>
                         <p id="tabla-ayuda" class="visually-hidden">Tabla de gastos con acciones de editar y borrar.</p>
