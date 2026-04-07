@@ -63,3 +63,30 @@ ON gastos_simples.* TO 'gastos_user'@'localhost';
 
 FLUSH PRIVILEGES;
 
+-- Usuario MySQL para la aplicación "Gastos Simples"
+-- Recomendado ejecutar como root o usuario admin.
+
+-- 1) Crear usuario
+CREATE USER IF NOT EXISTS 'gastos_user'@'localhost'
+IDENTIFIED BY 'Gastos2026#Fuerte!';
+
+-- 2) Permisos base (USAGE no da privilegios; deja el usuario "existente" sin acceso)
+GRANT USAGE ON *.* TO 'gastos_user'@'localhost';
+
+-- 3) Ajustes de límites y requisitos (opcional; aquí sin límites y sin requerir SSL)
+ALTER USER 'gastos_user'@'localhost'
+  REQUIRE NONE
+  WITH
+    MAX_QUERIES_PER_HOUR 0
+    MAX_CONNECTIONS_PER_HOUR 0
+    MAX_UPDATES_PER_HOUR 0
+    MAX_USER_CONNECTIONS 0;
+
+-- 4) Privilegios mínimos necesarios para el funcionamiento del proyecto
+-- (CRUD + import/export). No hace falta ALTER/DROP/CREATE en tiempo de ejecución.
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON gastos_simples.* TO 'gastos_user'@'localhost';
+
+-- 5) Aplicar cambios
+FLUSH PRIVILEGES;
+``

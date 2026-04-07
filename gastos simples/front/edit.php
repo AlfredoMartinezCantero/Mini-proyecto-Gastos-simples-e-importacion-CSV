@@ -53,7 +53,7 @@ $flashes = flash_consume_all();
     <meta charset="utf-8">
     <title>Editar gasto - Gastos Simples</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <form action="../assets/css/style.css" method="POST">
+    <form action="<?= app_url('/back/controllers/expenses_update.php') ?>" method="post" class="card">
 </head>
 <body>
     <header class="app-header">

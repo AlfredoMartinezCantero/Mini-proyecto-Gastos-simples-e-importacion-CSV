@@ -123,14 +123,13 @@ function eur(float $n): string { return '€ ' . number_format($n, 2, ',', '.');
             <a class="btn" href="new.php" aria-label="Añadir gasto">Añadir gasto</a>
             <a class="btn" href="import.php" aria-label="Importar CSV">Importar CSV</a>
 
-            <!-- Exportar: usar los filtros activos (GET); no modifica estado, no requiere CSRF -->
             <form class="inline-form" action="../back/controllers/export_csv.php" method="get" aria-label="Exportar CSV">
-                <input type="hidden" name="month" value="<?=htmlspecialchars($month) ?>">
-                <input type="hidden" name="category" value="<?=htmlspecialchars($category) ?>">
-                <input type="hidden" name="q" value="<?=htmlspecialchars($q) ?>">
+                <input type="hidden" name="month" value="<?= htmlspecialchars($month ?? '') ?>">
+                <input type="hidden" name="category" value="<?= htmlspecialchars($category ?? '') ?>">
+                <input type="hidden" name="q" value="<?= htmlspecialchars($q ?? '') ?>">
                 <button class="btn" type="submit">Exportar CSV</button>
-        </form>
-    </nav>
+            </form>
+        </nav>
 </header>
 
 <?php

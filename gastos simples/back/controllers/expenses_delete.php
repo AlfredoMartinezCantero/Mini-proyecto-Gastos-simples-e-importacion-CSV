@@ -50,5 +50,6 @@ try {
     }
 }
 
-header('Location: /front/index.php', true, 302);
+
+app_redirect('/front/index.php');
 exit;
