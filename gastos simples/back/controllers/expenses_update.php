@@ -8,6 +8,12 @@ require_once __DIR__ . '/../inc/csrf.php';
 require_once __DIR__ . '/../inc/flash.php';
 
 require_login();
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    http_response_code(405);
+    exit('Método no permitido.');
+}
+
 csrf_validate();
 
 $pdo = get_pdo();
@@ -20,19 +26,17 @@ $amountIn = trim((string)($_POST['amount'] ?? ''));
 
 if ($id <= 0) {
     flash_add('error', 'Solicitud inválida.');
-    header('Location: /front/index.php', true, 302);
-    exit;
+    app_redirect('/front/index.php');
 }
 
-// Cargar actual para verificar permisos
+// Verifica que exista y permisos
 $stmt = $pdo->prepare('SELECT user_id FROM expenses WHERE id = :id');
 $stmt->execute([':id' => $id]);
 $current = $stmt->fetch();
 
 if (!$current) {
     flash_add('error', 'Gasto no encontrado.');
-    header('Location: /front/index.php', true, 302);
-    exit;
+    app_redirect('/front/index.php');
 }
 
 $isAdmin = current_user_is_admin();
@@ -44,9 +48,10 @@ if (!$isAdmin && (int)$current['user_id'] !== $userId) {
 
 // Validaciones
 $errors = [];
+
 $dt = DateTime::createFromFormat('Y-m-d', $date);
 $okDate = $dt && $dt->format('Y-m-d') === $date;
-if (!$okDate) { $errors[] = 'La fecha debe tener formato YYYY-MM-DD.'; }
+if (!$okDate) $errors[] = 'La fecha debe tener formato YYYY-MM-DD.';
 
 if ($concept === '' || mb_strlen($concept) > 180) {
     $errors[] = 'El concepto es obligatorio y no puede superar 180 caracteres.';
@@ -64,10 +69,12 @@ $amount = (float)$amountNorm;
 if ($errors) {
     $_SESSION['form_errors'] = $errors;
     $_SESSION['form_old'] = [
-        'date' => $date, 'concept' => $concept, 'category' => $category, 'amount' => $amountIn
+        'date' => $date,
+        'concept' => $concept,
+        'category' => $category,
+        'amount' => $amountIn,
     ];
-    header('Location: /front/edit.php?id=' . $id, true, 302);
-    exit;
+    app_redirect('/front/edit.php?id=' . $id);
 }
 
 try {
@@ -77,20 +84,20 @@ try {
          WHERE id = :id"
     );
     $stmt->execute([
-        ':d' => $date,
-        ':c' => $concept,
+        ':d'   => $date,
+        ':c'   => $concept,
         ':cat' => $category,
-        ':a' => $amount,
-        ':id' => $id,
+        ':a'   => $amount,
+        ':id'  => $id,
     ]);
+
     flash_add('success', 'Gasto actualizado correctamente.');
 } catch (Throwable $e) {
-    if (APP_DEBUG) {
+    if (defined('APP_DEBUG') && APP_DEBUG) {
         flash_add('error', 'Error al actualizar: ' . $e->getMessage());
     } else {
         flash_add('error', 'No se ha podido actualizar el gasto.');
     }
 }
 
-header('Location: /front/index.php', true, 302);
-exit;
+app_redirect('/front/index.php');

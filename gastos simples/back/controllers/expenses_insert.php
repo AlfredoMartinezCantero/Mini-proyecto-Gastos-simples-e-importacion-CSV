@@ -47,7 +47,7 @@ if ($errors) {
     $_SESSION['form_old'] = [
         'date' => $date, 'concept' => $concept, 'category' => $category, 'amount' => $amountIn
     ];
-    header('Location: /front/new.php', true, 302);
+    header('Location: ../../front/new.php', true, 302);
     exit;
 }
 
@@ -72,5 +72,5 @@ try {
     }
 }
 
-header('Location: /front/index.php', true, 302);
+header('Location: ../../front/index.php', true, 302);
 exit;
