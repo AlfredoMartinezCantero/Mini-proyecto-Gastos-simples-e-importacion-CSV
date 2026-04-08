@@ -2,11 +2,6 @@
 
 declare(strict_types=1);
 
-/**
- * Mensajes flash sencillos en $_SESSION.
- * Tipos sugeridos: success, error, warning, info.
- */
-
 function flash_add(string $type, string $message): void {
     $_SESSION['flash'][] = ['type' => $type, 'message' => $message];
 }

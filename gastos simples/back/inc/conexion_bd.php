@@ -3,12 +3,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/paths.php';
 session_start();
 
-
-/**
- * Configuración: ajustar aqui las credenciales o via variables de entorno.
- * - Variables de entorno admitidas: DB_HOST, DB_NAME, DB_USER, DB_PASS, DB_CHARSET
- */
-
 const APP_DEBUG = true; // en producción: false
 
 function env(string $key, ?string $default = null): ?string{
@@ -39,15 +33,11 @@ function get_pdo(): PDO{
 
         $pdo->exec("SET NAMES {$charset} COLLATE utf8mb4_spanish_ci");
 
-// ... dentro de back/inc/conexion_bd.php, tras crear $pdo:
-
-// (mantén también tu línea de NAMES/colación, está bien)
 $pdo->exec("SET NAMES utf8mb4 COLLATE utf8mb4_spanish_ci");
 
-/**
+/*
  * Intenta varios sql_mode válidos (sin espacios en los tokens) hasta que uno funcione.
- * Evita errores 1231 por tokens no soportados o con espacios accidentales.
- */
+ * Evita errores 1231 por tokens no soportados o con espacios accidentales. */
 function setStrictSqlMode(PDO $pdo): void {
     $candidates = [
         // MySQL 8.x / MariaDB modernos (si soportan el token explícito de división por cero)

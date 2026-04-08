@@ -24,6 +24,12 @@ $concept  = trim((string)($_POST['concept'] ?? ''));
 $category = trim((string)($_POST['category'] ?? ''));
 $amountIn = trim((string)($_POST['amount'] ?? ''));
 
+// Nuevo: tipo (gasto/ingreso)
+$type = (string)($_POST['type'] ?? 'expense');
+if (!in_array($type, ['expense', 'income'], true)) {
+    $type = 'expense';
+}
+
 if ($id <= 0) {
     flash_add('error', 'Solicitud inválida.');
     app_redirect('/front/index.php');
@@ -51,7 +57,9 @@ $errors = [];
 
 $dt = DateTime::createFromFormat('Y-m-d', $date);
 $okDate = $dt && $dt->format('Y-m-d') === $date;
-if (!$okDate) $errors[] = 'La fecha debe tener formato YYYY-MM-DD.';
+if (!$okDate) {
+    $errors[] = 'La fecha debe tener formato YYYY-MM-DD.';
+}
 
 if ($concept === '' || mb_strlen($concept) > 180) {
     $errors[] = 'El concepto es obligatorio y no puede superar 180 caracteres.';
@@ -63,16 +71,26 @@ if ($category === '' || mb_strlen($category) > 60) {
 $amountNorm = str_replace(',', '.', $amountIn);
 if (!is_numeric($amountNorm)) {
     $errors[] = 'El importe debe ser un número válido (usa punto decimal).';
+    $amount = 0.0;
+} else {
+    $amount = (float)$amountNorm;
+
+    // Normalización del signo según tipo
+    if ($type === 'income') {
+        $amount = -abs($amount);
+    } else {
+        $amount = abs($amount);
+    }
 }
-$amount = (float)$amountNorm;
 
 if ($errors) {
     $_SESSION['form_errors'] = $errors;
     $_SESSION['form_old'] = [
-        'date' => $date,
-        'concept' => $concept,
+        'date'     => $date,
+        'concept'  => $concept,
         'category' => $category,
-        'amount' => $amountIn,
+        'amount'   => $amountIn,
+        'type'     => $type,     // guardamos para repoblar el select
     ];
     app_redirect('/front/edit.php?id=' . $id);
 }
@@ -91,12 +109,12 @@ try {
         ':id'  => $id,
     ]);
 
-    flash_add('success', 'Gasto actualizado correctamente.');
+    flash_add('success', ($type === 'income') ? 'Ingreso actualizado correctamente.' : 'Gasto actualizado correctamente.');
 } catch (Throwable $e) {
     if (defined('APP_DEBUG') && APP_DEBUG) {
         flash_add('error', 'Error al actualizar: ' . $e->getMessage());
     } else {
-        flash_add('error', 'No se ha podido actualizar el gasto.');
+        flash_add('error', 'No se ha podido actualizar el registro.');
     }
 }
 
