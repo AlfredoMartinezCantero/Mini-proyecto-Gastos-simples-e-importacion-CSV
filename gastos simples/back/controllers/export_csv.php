@@ -23,11 +23,10 @@ $filename = ($month !== '' && preg_match('/^\d{4}-\d{2}$/', $month))
 $w = [];
 $args = [];
 
-// Multiusuario: si no es admin, filtrar por su user_id
-if (!$isAdmin) {
-    $w[] = 'user_id = :uid';
-    $args[':uid'] = $userId;
-}
+// Export SIEMPRE personal, incluso para admin
+$w[] = 'user_id = :uid';
+$args[':uid'] = $userId;
+
 
 // Mes -> rango [from, to]
 if ($month !== '' && preg_match('/^\d{4}-\d{2}$/', $month)) {
