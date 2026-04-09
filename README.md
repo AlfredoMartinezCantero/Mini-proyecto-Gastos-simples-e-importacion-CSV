@@ -4,7 +4,7 @@
 
 Mini‑proyecto web sin frameworks para registrar gastos y ver balance mensual, con importación/exportación CSV y gráfico con Chart.js.
 
-## ✅ Funcionalidades
+## Funcionalidades
 - Alta / edición / borrado de gastos.
 - Listado con filtros:
   - Mes (`YYYY-MM`)
@@ -19,7 +19,7 @@ Mini‑proyecto web sin frameworks para registrar gastos y ver balance mensual, 
   - Gastos por **día** del mes (toggle)
   - Datos cargados vía endpoint JSON (`fetch`)
 
-## 🧱 Stack
+## Stack
 - PHP 8.x (sin frameworks)
 - MySQL/MariaDB
 - PDO
@@ -27,13 +27,13 @@ Mini‑proyecto web sin frameworks para registrar gastos y ver balance mensual, 
 - Chart.js (CDN)
 - Sesiones PHP
 
-## ✅ Requisitos
+## Requisitos
 - PHP 8.x con extensiones:
   - `pdo_mysql`
 - MySQL 8.x o MariaDB 10.x
 - Servidor web (Apache/Nginx) o PHP built‑in server para desarrollo
 
-## ⚙️ Instalación (MySQL)
+## Instalación (MySQL)
 1) Crea la base de datos y tablas:
 - bash
 - mysql -u TU_USUARIO -p < back/inc/schema.mysql.sql
